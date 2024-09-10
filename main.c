@@ -2,26 +2,13 @@
 #include <X11/Xutil.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "mc_component.h"
 #include "mc_button.h"
+#include "mc_menu.h"
+#include "dlog.h"
 
 #define MAX_WINDOW 10
-
-// エラーを処理するための関数
-void handleError(const char *msg)
-{
-    perror(msg);
-    exit(EXIT_FAILURE);
-}
-
-// ボタンの描画
-void drawButton(Display *display, Window button, GC gc, XColor color, Colormap colormap)
-{
-    XSetForeground(display, gc, color.pixel);
-    XFillRectangle(display, button, gc, 0, 0, 100, 30);
-    XSetForeground(display, gc, BlackPixel(display, DefaultScreen(display)));
-    XDrawString(display, button, gc, 10, 20, "Click me", 8);
-}
 
 void register_window_attrs(win_attr_t *attrs, Display *display, Window *window, int screen, GC *gc, Colormap *colormap, XSetWindowAttributes *swa, unsigned long mask)
 {
@@ -51,15 +38,13 @@ int main()
     Colormap colormap;
     XSetWindowAttributes swa;
     unsigned long mask;
-    mc_button_t *button;
     win_attr_t attrs;
+    mc_button_t *button;
+    mc_menu_t * menu;
 
     // Xサーバーへの接続を開く
     display = XOpenDisplay(NULL);
-    if (display == NULL)
-    {
-        handleError("Unable to open X display");
-    }
+    ERR_RET(!display, "Unable to open X display");
 
     // 画面のデフォルトスクリーン番号を取得
     screen = DefaultScreen(display);
@@ -71,7 +56,7 @@ int main()
     swa.override_redirect = True;
     mask = CWBackPixel | CWBorderPixel | CWOverrideRedirect;
 
-    window = XCreateWindow(display, RootWindow(display, screen), 10, 10, 800, 600, 0,
+    window = XCreateWindow(display, RootWindow(display, screen), 1320, 0, 600, 1024, 0,
                            CopyFromParent, InputOutput, CopyFromParent, mask, &swa);
 
     // グラフィックスコンテキストを作成
@@ -82,18 +67,23 @@ int main()
     // GUI関連変数を保存
     register_window_attrs(&attrs, display, &window, screen, &gc, &colormap, &swa, mask);
 
-    // ボタンウィンドウの属性を設定して枠なしボタンを作成
-    rect_t button_rect = {50, 50, 100, 30};
+    // ボタン作成
+    rect_t button_rect = {50, 50, 0, 0};
     button = create_button(&attrs, &button_rect);
+
+    rect_t menu_rect = {200, 400, 0, 50};
+    menu = create_menu(&attrs, &menu_rect);
+    button->onClick = menu->show;
+    button->onClickArg = menu;
 
     // メインウィンドウにイベントマスクを設定
     XSelectInput(display, window, ExposureMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask);
-
-    // メインウィンドウとボタンウィンドウの表示
+    // 表示
     XMapWindow(display, window);
 
+    dlog("bef loop");
     // イベントループ
-    while (1)
+    while (true)
     {
         XNextEvent(display, &event);
 
@@ -116,6 +106,7 @@ int main()
             Atom wmDelete = XInternAtom(display, "WM_DELETE_WINDOW", True);
             if ((Atom)event.xclient.data.l[0] == wmDelete)
             {
+                dlog("WM_DELETE_WINDOW received");
                 break;
             }
         }
@@ -131,5 +122,6 @@ int main()
     XDestroyWindow(display, window);
     XCloseDisplay(display);
 
+error_return:
     return 0;
 }

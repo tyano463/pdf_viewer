@@ -9,8 +9,8 @@ typedef void (*destroyfunc_t)(void *);
 
 typedef struct str_rect
 {
-    int h;
     int w;
+    int h;
     int l;
     int t;
 } rect_t;

@@ -1,10 +1,11 @@
 CC		:= $(CROSS_COMPILE)gcc
-CFLAGS	:= -g -O0
+CFLAGS	:= -g -O0 -Wall
 LDFLAGS	:= -lX11 -lmupdf
 EXE		:= pdf_viewer
 OBJS	:= main.o \
 	dlog.o \
 	mc_button.o \
+	mc_menu.o \
 	mc_pdf.o \
 	misc.o \
 
@@ -16,3 +17,6 @@ $(EXE):$(OBJS)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
+
+clean:
+	rm -f $(OBJS) $(EXE)

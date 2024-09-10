@@ -18,3 +18,11 @@ bool file_exists(const char *path)
 error_return:
     return ret;
 }
+
+void rgb2xcolor(win_attr_t * attrs, XColor* color, uint8_t r, uint8_t g, uint8_t b) {
+    color->red = r * 256;
+    color->green = g * 256;
+    color->blue = b * 256;
+    color->flags = DoRed | DoGreen | DoBlue;
+    XAllocColor(attrs->display, *attrs->colormap, color);
+}
