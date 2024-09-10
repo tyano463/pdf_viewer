@@ -16,5 +16,25 @@
         }                                                                                         \
     }
 
+#define ERR_RET(c, fmt, ...)                                                                          \
+    {                                                                                                 \
+        if (c)                                                                                        \
+        {                                                                                             \
+            FILE *_fp = dlog_fp();                                                                    \
+            if (_fp)                                                                                  \
+            {                                                                                         \
+                fprintf(_fp, "%s(%d) %s " fmt "\n", __FILENAME__, __LINE__, __func__, ##__VA_ARGS__); \
+                fflush(_fp);                                                                          \
+            }                                                                                         \
+            goto error_return;                                                                        \
+        }                                                                                             \
+    }
+
+#define ERR_RETn(c)            \
+    {                          \
+        if (c)                 \
+            goto error_return; \
+    }
+
 FILE *dlog_fp(void);
 #endif

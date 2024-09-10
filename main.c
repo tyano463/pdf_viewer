@@ -2,36 +2,62 @@
 #include <X11/Xutil.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "mc_component.h"
+#include "mc_button.h"
+
+#define MAX_WINDOW 10
 
 // エラーを処理するための関数
-void handleError(const char *msg) {
+void handleError(const char *msg)
+{
     perror(msg);
     exit(EXIT_FAILURE);
 }
 
 // ボタンの描画
-void drawButton(Display *display, Window button, GC gc, XColor color, Colormap colormap) {
+void drawButton(Display *display, Window button, GC gc, XColor color, Colormap colormap)
+{
     XSetForeground(display, gc, color.pixel);
     XFillRectangle(display, button, gc, 0, 0, 100, 30);
     XSetForeground(display, gc, BlackPixel(display, DefaultScreen(display)));
-    XDrawString(display, button, gc, 10, 20, "Click me", 7);
+    XDrawString(display, button, gc, 10, 20, "Click me", 8);
 }
 
-int main() {
+void register_window_attrs(win_attr_t *attrs, Display *display, Window *window, int screen, GC *gc, Colormap *colormap, XSetWindowAttributes *swa, unsigned long mask)
+{
+    attrs->display = display;
+    attrs->window = window;
+    attrs->screen = screen;
+    attrs->gc = gc;
+    attrs->colormap = colormap;
+    attrs->swa = swa;
+    attrs->mask = mask;
+    attrs->windows = calloc(sizeof(Window *) * MAX_WINDOW, 1);
+    attrs->draw_cb = calloc(sizeof(drawfunc_t *) * MAX_WINDOW, 1);
+    attrs->destroy_cb = calloc(sizeof(drawfunc_t *) * MAX_WINDOW, 1);
+    attrs->args = calloc(sizeof(void *) * MAX_WINDOW, 1);
+    attrs->windows[0] = window;
+    attrs->wcnt = 1;
+}
+
+int main()
+{
     Display *display;
-    Window window, button;
+    Window window;
     XEvent event;
-    int screen;
+    int screen, i;
     GC gc;
     XGCValues values;
     Colormap colormap;
-    XColor buttonColor, buttonPressedColor;
     XSetWindowAttributes swa;
     unsigned long mask;
+    mc_button_t *button;
+    win_attr_t attrs;
 
     // Xサーバーへの接続を開く
     display = XOpenDisplay(NULL);
-    if (display == NULL) {
+    if (display == NULL)
+    {
         handleError("Unable to open X display");
     }
 
@@ -53,17 +79,12 @@ int main() {
     XSetForeground(display, gc, BlackPixel(display, screen));
     XSetBackground(display, gc, WhitePixel(display, screen));
 
+    // GUI関連変数を保存
+    register_window_attrs(&attrs, display, &window, screen, &gc, &colormap, &swa, mask);
+
     // ボタンウィンドウの属性を設定して枠なしボタンを作成
-    button = XCreateWindow(display, window, 50, 50, 100, 30, 0,
-                           CopyFromParent, InputOutput, CopyFromParent, mask, &swa);
-
-    // ボタンの色を設定
-    XAllocNamedColor(display, colormap, "lightgrey", &buttonColor, &buttonColor);
-    XAllocNamedColor(display, colormap, "darkgrey", &buttonPressedColor, &buttonPressedColor);
-
-    // ボタンにイベントマスクを設定
-    XSelectInput(display, button, ExposureMask | ButtonPressMask | ButtonReleaseMask);
-    XMapWindow(display, button);
+    rect_t button_rect = {50, 50, 100, 30};
+    button = create_button(&attrs, &button_rect);
 
     // メインウィンドウにイベントマスクを設定
     XSelectInput(display, window, ExposureMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask);
@@ -72,38 +93,29 @@ int main() {
     XMapWindow(display, window);
 
     // イベントループ
-    while (1) {
+    while (1)
+    {
         XNextEvent(display, &event);
 
-        if (event.type == Expose) {
-            // メインウィンドウに四角形を塗りつぶす
-            XSetForeground(display, gc, BlackPixel(display, screen));
-            XFillRectangle(display, window, gc, 50, 50, 200, 100);
-
-            // メインウィンドウに文字を描画する
-            XSetForeground(display, gc, BlackPixel(display, screen));
-            XDrawString(display, window, gc, 100, 150, "Hello, X11!", 11);
+        if (event.type == Expose)
+        {
+            // 描画
         }
 
-        if (event.type == Expose && event.xexpose.window == button) {
-            drawButton(display, button, gc, buttonColor, colormap);
-        }
-
-        if (event.type == ButtonPress) {
-            if (event.xbutton.window == button) {
-                drawButton(display, button, gc, buttonPressedColor, colormap);
+        for (i = 1; i < attrs.wcnt; i++)
+        {
+            if (event.xexpose.window == *attrs.windows[i])
+            {
+                if (attrs.draw_cb[i])
+                    attrs.draw_cb[i](attrs.args[i], event.type);
             }
         }
 
-        if (event.type == ButtonRelease) {
-            if (event.xbutton.window == button) {
-                drawButton(display, button, gc, buttonColor, colormap);
-            }
-        }
-
-        if (event.type == ClientMessage) {
+        if (event.type == ClientMessage)
+        {
             Atom wmDelete = XInternAtom(display, "WM_DELETE_WINDOW", True);
-            if ((Atom)event.xclient.data.l[0] == wmDelete) {
+            if ((Atom)event.xclient.data.l[0] == wmDelete)
+            {
                 break;
             }
         }
@@ -111,7 +123,11 @@ int main() {
 
     // リソースを解放
     XFreeGC(display, gc);
-    XDestroyWindow(display, button);
+    for (i = 1; i < attrs.wcnt; i++)
+    {
+        if (attrs.destroy_cb[i])
+            attrs.destroy_cb[i](attrs.args[i]);
+    }
     XDestroyWindow(display, window);
     XCloseDisplay(display);
 

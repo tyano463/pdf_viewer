@@ -1,8 +1,13 @@
-CC		:= gcc
+CC		:= $(CROSS_COMPILE)gcc
 CFLAGS	:= -g -O0
-LDFLAGS	:= -lX11
+LDFLAGS	:= -lX11 -lmupdf
 EXE		:= pdf_viewer
-OBJS	:= main.o dlog.o
+OBJS	:= main.o \
+	dlog.o \
+	mc_button.o \
+	mc_pdf.o \
+	misc.o \
+
 
 all:$(EXE)
 
