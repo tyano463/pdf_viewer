@@ -4,14 +4,14 @@
 #include "misc.h"
 #include "dlog.h"
 
-static void draw(void *arg, int etype)
+static void draw(void *arg, XEvent* event)
 {
     mc_button_t *button = arg;
     win_attr_t *a = button->attrs;
 
     XColor *color = NULL;
 
-    switch (etype)
+    switch (event->type)
     {
     case Expose:
     case ButtonRelease:
@@ -42,7 +42,7 @@ static void draw(void *arg, int etype)
         }
     }
 
-    if (etype == ButtonRelease && button->onClick)
+    if (event->type == ButtonRelease && button->onClick)
     {
         button->onClick(button->onClickArg);
     }
@@ -79,7 +79,7 @@ mc_button_t *create_button(win_attr_t *attrs, rect_t *rect)
     XSelectInput(attrs->display, button->button, ExposureMask | ButtonPressMask | ButtonReleaseMask);
     XMapWindow(attrs->display, button->button);
 
-    attrs->windows[attrs->wcnt] = &button->button;
+    attrs->windows[attrs->wcnt] = button->button;
     attrs->draw_cb[attrs->wcnt] = draw;
     attrs->destroy_cb[attrs->wcnt] = destroy;
     attrs->args[attrs->wcnt] = (void *)button;

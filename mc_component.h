@@ -4,7 +4,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-typedef void (*drawfunc_t)(void *, int);
+typedef void (*drawfunc_t)(void *, XEvent *);
 typedef void (*destroyfunc_t)(void *);
 
 typedef struct str_rect
@@ -24,7 +24,7 @@ typedef struct str_win_attr
     Colormap *colormap;
     XSetWindowAttributes *swa;
     unsigned long mask;
-    Window **windows;
+    Window *windows;
     drawfunc_t *draw_cb;
     destroyfunc_t *destroy_cb;
     void **args;

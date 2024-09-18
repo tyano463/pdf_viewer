@@ -3,9 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <dirent.h>
 #include "mc_component.h"
 #include "mc_button.h"
 #include "mc_menu.h"
+#include "misc.h"
+#include "file_open.h"
 #include "dlog.h"
 
 #define MAX_WINDOW 10
@@ -23,8 +26,13 @@ void register_window_attrs(win_attr_t *attrs, Display *display, Window *window, 
     attrs->draw_cb = calloc(sizeof(drawfunc_t *) * MAX_WINDOW, 1);
     attrs->destroy_cb = calloc(sizeof(drawfunc_t *) * MAX_WINDOW, 1);
     attrs->args = calloc(sizeof(void *) * MAX_WINDOW, 1);
-    attrs->windows[0] = window;
+    attrs->windows[0] = *window;
     attrs->wcnt = 1;
+}
+
+void exit_app(win_attr_t *attr, void *arg)
+{
+    exit(0);
 }
 
 int main()
@@ -40,7 +48,7 @@ int main()
     unsigned long mask;
     win_attr_t attrs;
     mc_button_t *button;
-    mc_menu_t * menu;
+    mc_menu_t *menu;
 
     // Xサーバーへの接続を開く
     display = XOpenDisplay(NULL);
@@ -75,6 +83,9 @@ int main()
     menu = create_menu(&attrs, &menu_rect);
     button->onClick = menu->show;
     button->onClickArg = menu;
+    int m_ind = 0;
+    menu->menu_items[m_ind++] = (menu_item_t){"File Open", show_file_list};
+    menu->menu_items[m_ind++] = (menu_item_t){"Exit", exit_app};
 
     // メインウィンドウにイベントマスクを設定
     XSelectInput(display, window, ExposureMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask);
@@ -87,20 +98,6 @@ int main()
     {
         XNextEvent(display, &event);
 
-        if (event.type == Expose)
-        {
-            // 描画
-        }
-
-        for (i = 1; i < attrs.wcnt; i++)
-        {
-            if (event.xexpose.window == *attrs.windows[i])
-            {
-                if (attrs.draw_cb[i])
-                    attrs.draw_cb[i](attrs.args[i], event.type);
-            }
-        }
-
         if (event.type == ClientMessage)
         {
             Atom wmDelete = XInternAtom(display, "WM_DELETE_WINDOW", True);
@@ -108,6 +105,15 @@ int main()
             {
                 dlog("WM_DELETE_WINDOW received");
                 break;
+            }
+        }
+
+        for (i = 0; i < attrs.wcnt; i++)
+        {
+            if (event.xexpose.window == attrs.windows[i])
+            {
+                if (attrs.draw_cb[i])
+                    attrs.draw_cb[i](attrs.args[i], &event);
             }
         }
     }

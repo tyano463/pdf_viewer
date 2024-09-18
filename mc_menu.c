@@ -5,7 +5,8 @@
 #include "dlog.h"
 
 static bool shown = false;
-static void draw(void *arg, int etype)
+static int menu_pos(int y, int lh);
+static void draw(void *arg, XEvent *event)
 {
     mc_menu_t *menu = arg;
     win_attr_t *a = menu->attrs;
@@ -14,34 +15,42 @@ static void draw(void *arg, int etype)
     int missing_charset_count;
     char *default_string;
     XFontSet fontset;
-    int lh = 20;
-    const char *mstring[] = {
-        "menu dayo",
-        "menuだよ",
-    };
+    int lh = 32;
 
-    dlog("IN");
+    int menu_ind = -1;
 
-    switch (etype)
+    // dlog("IN");
+
+    switch (event->type)
     {
     case Expose:
-        rgb2xcolor(a, &color, 200, 80, 80);
+        rgb2xcolor(a, &color, 0xee, 0x82, 0xee);
         XSetForeground(a->display, *a->gc, color.pixel);
         XFillRectangle(a->display, menu->menu, *a->gc, 0, 0, menu->size.w, menu->size.h);
         rgb2xcolor(a, &color, 0, 0, 0);
         XSetForeground(a->display, *a->gc, color.pixel);
         setlocale(LC_CTYPE, "");
-        fontset = XCreateFontSet(a->display, "-*-*-medium-r-normal--14-*-*-*-*-*-*-*", &missing_charset_list, &missing_charset_count, &default_string);
+        fontset = XCreateFontSet(a->display, "-*-*-medium-r-normal--16-*-*-*-*-*-*-*", &missing_charset_list, &missing_charset_count, &default_string);
         if (!fontset)
             break;
 
-        for (int i = 0; i < ARRAY_SIZE(mstring); i++)
+        for (int i = 0; i < menu->menu_items[i].menu_string; i++)
         {
-            Xutf8DrawString(a->display, menu->menu, fontset, *a->gc, 10, 10 + i * lh, mstring[i], strlen(mstring[i]));
+            const char *s = menu->menu_items[i].menu_string;
+            Xutf8DrawString(a->display, menu->menu, fontset, *a->gc, 10, (int)((i + (double)3 / 4) * lh), s, strlen(s));
         }
+        XFreeFontSet(a->display, fontset);
         break;
     case ButtonRelease:
+        break;
     case ButtonPress:
+        menu_ind = menu_pos(event->xbutton.y, lh);
+        if (0 <= menu_ind && menu_ind < MAX_MENU_ITEMS && menu->menu_items[menu_ind].onMenuTapped)
+        {
+            // menu tapped
+            dlog("pos:%d (%d, %d)", menu_ind, event->xbutton.x, event->xbutton.y);
+            menu->menu_items[menu_ind].onMenuTapped(a, menu);
+        }
         break;
     default:
         break;
@@ -88,7 +97,7 @@ mc_menu_t *create_menu(win_attr_t *attrs, rect_t *rect)
     menu->menu = XCreateWindow(attrs->display, *attrs->window, rect->l, rect->t, rect->w, rect->h, 0, CopyFromParent, InputOutput, CopyFromParent, attrs->mask, attrs->swa);
     XSelectInput(attrs->display, menu->menu, ExposureMask | ButtonPressMask | ButtonReleaseMask);
 
-    attrs->windows[attrs->wcnt] = &menu->menu;
+    attrs->windows[attrs->wcnt] = menu->menu;
     attrs->draw_cb[attrs->wcnt] = draw;
     attrs->destroy_cb[attrs->wcnt] = destroy;
     attrs->args[attrs->wcnt] = (void *)menu;
@@ -98,4 +107,9 @@ mc_menu_t *create_menu(win_attr_t *attrs, rect_t *rect)
 
 error_return:
     return menu;
+}
+
+static int menu_pos(int y, int lh)
+{
+    return (y + (y % lh > 0 ? lh : 0)) / lh - 1;
 }

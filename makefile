@@ -8,6 +8,8 @@ OBJS	:= main.o \
 	mc_menu.o \
 	mc_pdf.o \
 	misc.o \
+	file_open.o \
+	config.o \
 
 
 all:$(EXE)

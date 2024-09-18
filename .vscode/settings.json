@@ -41,6 +41,7 @@
         "dlog.h": "c",
         "stdint.h": "c",
         "string.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "xlib.h": "c"
     }
 }
