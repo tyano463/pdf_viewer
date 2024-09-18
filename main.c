@@ -7,13 +7,15 @@
 #include "mc_component.h"
 #include "mc_button.h"
 #include "mc_menu.h"
+#include "mc_pdf.h"
+#include "mc_pdfview.h"
 #include "misc.h"
 #include "file_open.h"
 #include "dlog.h"
 
 #define MAX_WINDOW 10
 
-void register_window_attrs(win_attr_t *attrs, Display *display, Window *window, int screen, GC *gc, Colormap *colormap, XSetWindowAttributes *swa, unsigned long mask)
+void register_window_attrs(win_attr_t *attrs, Display *display, Window window, int screen, GC *gc, Colormap *colormap, XSetWindowAttributes *swa, unsigned long mask)
 {
     attrs->display = display;
     attrs->window = window;
@@ -26,7 +28,7 @@ void register_window_attrs(win_attr_t *attrs, Display *display, Window *window, 
     attrs->draw_cb = calloc(sizeof(drawfunc_t *) * MAX_WINDOW, 1);
     attrs->destroy_cb = calloc(sizeof(drawfunc_t *) * MAX_WINDOW, 1);
     attrs->args = calloc(sizeof(void *) * MAX_WINDOW, 1);
-    attrs->windows[0] = *window;
+    attrs->windows[0] = window;
     attrs->wcnt = 1;
 }
 
@@ -34,6 +36,8 @@ void exit_app(win_attr_t *attr, void *arg)
 {
     exit(0);
 }
+
+
 
 int main()
 {
@@ -73,7 +77,7 @@ int main()
     XSetBackground(display, gc, WhitePixel(display, screen));
 
     // GUI関連変数を保存
-    register_window_attrs(&attrs, display, &window, screen, &gc, &colormap, &swa, mask);
+    register_window_attrs(&attrs, display, window, screen, &gc, &colormap, &swa, mask);
 
     // ボタン作成
     rect_t button_rect = {50, 50, 0, 0};
@@ -84,8 +88,8 @@ int main()
     button->onClick = menu->show;
     button->onClickArg = menu;
     int m_ind = 0;
-    menu->menu_items[m_ind++] = (menu_item_t){"File Open", show_file_list};
-    menu->menu_items[m_ind++] = (menu_item_t){"Exit", exit_app};
+    menu->menu_items[m_ind++] = (menu_item_t){"File Open", show_file_list, open_pdf};
+    menu->menu_items[m_ind++] = (menu_item_t){"Exit", exit_app, NULL};
 
     // メインウィンドウにイベントマスクを設定
     XSelectInput(display, window, ExposureMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask);

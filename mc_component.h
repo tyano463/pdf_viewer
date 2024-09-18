@@ -18,7 +18,7 @@ typedef struct str_rect
 typedef struct str_win_attr
 {
     Display *display;
-    Window *window;
+    Window window;
     int screen;
     GC *gc;
     Colormap *colormap;

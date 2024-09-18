@@ -18,14 +18,14 @@ static int g_line_height;
 void show_file_list(win_attr_t *attr, void *arg)
 {
     dlog("");
-    if (attr == NULL || attr->display == NULL || attr->window == NULL || *attr->window == 0)
+    if (attr == NULL || attr->display == NULL || attr->window == 0 || attr->window == 0)
     {
         fprintf(stderr, "Invalid window attributes\n");
         return;
     }
 
     Display *display = attr->display;
-    Window main_window = *attr->window;
+    Window main_window = attr->window;
     int screen = attr->screen;
     GC gc = *attr->gc;
     XSetWindowAttributes swa = *attr->swa;
@@ -79,6 +79,7 @@ void show_file_list(win_attr_t *attr, void *arg)
     f->window = child_window;
     f->attr = attr;
     f->button = button;
+    f->cb = arg;
 
     free_fontset(display, fontset);
     // Draw the file list in the child window
@@ -115,6 +116,9 @@ static void file_tapped(void *arg, XEvent *event)
     {
         dlog("%s %s", cwd, fname);
         close_dialog(f);
+        if (f->cb)
+            f->cb(f->attr, (void*)fname);
+        free(f);
     }
 }
 
@@ -191,7 +195,7 @@ static Window create_close_button(file_open_t *f, win_attr_t *attr, Window windo
     XWindowAttributes wa;
     Window button;
 
-    XGetWindowAttributes(attr->display, *attr->window, &wa);
+    XGetWindowAttributes(attr->display, attr->window, &wa);
 
     int button_width = 80;
     int button_height = 30;

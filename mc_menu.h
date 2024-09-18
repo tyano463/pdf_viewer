@@ -9,7 +9,8 @@
 typedef struct str_menu_item
 {
     const char *menu_string;
-    void (*onMenuTapped)(win_attr_t *, void*);
+    void (*onMenuTapped)(win_attr_t *, void *);
+    int (*callback)(win_attr_t *, void *);
 } menu_item_t;
 
 typedef struct str_mc_menu mc_menu_t;
@@ -22,7 +23,7 @@ typedef struct str_mc_menu
     XColor pressed_color;
     rect_t size;
     void (*show)(void *);
-    void (*onClick)(void *);
+    int (*onClick)(win_attr_t *, void *);
     menu_item_t menu_items[MAX_MENU_ITEMS];
 } mc_menu_t;
 

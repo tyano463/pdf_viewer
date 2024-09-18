@@ -11,6 +11,7 @@ typedef struct str_file_open
     char **file_list;
     int file_count;
     char *cur_dir;
+    int (*cb)(win_attr_t *, void *);
 } file_open_t;
 void show_file_list(win_attr_t *, void *);
 

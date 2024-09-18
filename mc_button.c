@@ -63,7 +63,7 @@ mc_button_t *create_button(win_attr_t *attrs, rect_t *rect)
     button = malloc(sizeof(mc_button_t));
     ERR_RET(!button, "malloc failed");
 
-    button->button = XCreateWindow(attrs->display, *attrs->window, rect->l, rect->t, rect->w, rect->h, 0, CopyFromParent, InputOutput, CopyFromParent, attrs->mask, attrs->swa);
+    button->button = XCreateWindow(attrs->display, attrs->window, rect->l, rect->t, rect->w, rect->h, 0, CopyFromParent, InputOutput, CopyFromParent, attrs->mask, attrs->swa);
     button->attrs = attrs;
 
     button->size.h = rect->h;

@@ -14,4 +14,5 @@ int get_file_list(char ***file_list, int *file_count);
 void free_file_list(char **file_list, int file_count);
 XFontSet create_fontset(Display *display);
 void free_fontset(Display *display, XFontSet fontset);
+bool is_pdf(const char*);
 #endif

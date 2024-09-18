@@ -150,3 +150,15 @@ void free_fontset(Display *display, XFontSet fontset)
 {
     XFreeFontSet(display, fontset);
 }
+
+bool is_pdf(const char *path)
+{
+    bool ret = false;
+
+    ERR_RETn(!path);
+    const char *ext = strrchr(path, '.');
+    ret = ((ext != NULL) && (strcmp(ext, ".pdf") == 0));
+
+error_return:
+    return ret;
+}

@@ -6,6 +6,7 @@
 
 static bool shown = false;
 static int menu_pos(int y, int lh);
+
 static void draw(void *arg, XEvent *event)
 {
     mc_menu_t *menu = arg;
@@ -34,7 +35,7 @@ static void draw(void *arg, XEvent *event)
         if (!fontset)
             break;
 
-        for (int i = 0; i < menu->menu_items[i].menu_string; i++)
+        for (int i = 0; menu->menu_items[i].menu_string; i++)
         {
             const char *s = menu->menu_items[i].menu_string;
             Xutf8DrawString(a->display, menu->menu, fontset, *a->gc, 10, (int)((i + (double)3 / 4) * lh), s, strlen(s));
@@ -49,7 +50,8 @@ static void draw(void *arg, XEvent *event)
         {
             // menu tapped
             dlog("pos:%d (%d, %d)", menu_ind, event->xbutton.x, event->xbutton.y);
-            menu->menu_items[menu_ind].onMenuTapped(a, menu);
+
+            menu->menu_items[menu_ind].onMenuTapped(a, menu->menu_items[menu_ind].callback);
         }
         break;
     default:
@@ -94,7 +96,7 @@ mc_menu_t *create_menu(win_attr_t *attrs, rect_t *rect)
     menu->size.w = rect->w;
     menu->size.h = rect->h;
 
-    menu->menu = XCreateWindow(attrs->display, *attrs->window, rect->l, rect->t, rect->w, rect->h, 0, CopyFromParent, InputOutput, CopyFromParent, attrs->mask, attrs->swa);
+    menu->menu = XCreateWindow(attrs->display, attrs->window, rect->l, rect->t, rect->w, rect->h, 0, CopyFromParent, InputOutput, CopyFromParent, attrs->mask, attrs->swa);
     XSelectInput(attrs->display, menu->menu, ExposureMask | ButtonPressMask | ButtonReleaseMask);
 
     attrs->windows[attrs->wcnt] = menu->menu;

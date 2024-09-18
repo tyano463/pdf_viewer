@@ -6,7 +6,6 @@
 
 static fz_context *ctx;
 static fz_document *doc;
-static fz_pixmap *pix;
 static int pages;
 
 static void init(void)
@@ -63,6 +62,71 @@ int load_pdf(const char *fpath)
     }
 
     ret = 0;
+error_return:
+    return ret;
+}
+
+static double get_fit_size(rect_t *rect, fz_page *page)
+{
+    fz_rect bbox = fz_bound_page(ctx, page);
+
+    double page_width = bbox.x1 - bbox.x0;
+    double page_height = bbox.y1 - bbox.y0;
+
+    double scale_w = (double)rect->w / page_width;
+    double scale_h = (double)rect->h / page_height;
+
+    if (scale_w >= 1 && scale_h >= 1)
+    {
+        return 1.0;
+    }
+
+    return (scale_w < scale_h) ? scale_w : scale_h;
+}
+
+int get_pdf(mcpdf_page_t *page, int pageno, rect_t *rect)
+{
+    int ret = -1;
+    double resize;
+    pageno--;
+
+    ERR_RETn(!ctx);
+    ERR_RETn(!doc);
+    ERR_RETn(pageno < 0 || pages < 1 || pageno >= pages);
+
+    page->page = fz_load_page(ctx, doc, pageno);
+    resize = get_fit_size(rect, page->page);
+
+    fz_matrix mtx = fz_scale(resize, resize);
+    mtx = fz_pre_rotate(mtx, 0);
+    page->pix = fz_new_pixmap_from_page_number(ctx, doc, pageno, mtx, fz_device_rgb(ctx), 0);
+    ERR_RETn(!page->pix);
+
+    page->w = (uint16_t)(page->pix->w & 0xffff);
+    page->h = (uint16_t)(page->pix->h & 0xffff);
+    page->stride = page->pix->stride;
+    ERR_RETn(!page->w || !page->h || !page->stride);
+
+    dlog("w,h = %d,%d", page->w, page->h);
+    page->b = malloc(page->w * page->h * 4);
+    ERR_RETn(!page->b);
+    dlog("b:%p", page->b);
+    for (int y = 0; y < page->h; y++)
+    {
+        unsigned char *p = &page->pix->samples[y * page->pix->stride];
+        for (int x = 0; x < page->w; x++)
+        {
+            page->b[y * page->w * 4 + (x * 4) + 0] = p[(x * 3) + 2];
+            page->b[y * page->w * 4 + (x * 4) + 1] = p[(x * 3) + 1];
+            page->b[y * page->w * 4 + (x * 4) + 2] = p[(x * 3) + 0];
+            page->b[y * page->w * 4 + (x * 4) + 3] = 0xff;
+            int val = (int)p[(x * 3) + 0] + (int)p[(x * 3) + 1] + (int)p[(x * 3) + 2];
+            printf("%c", ((val < 384) ? '*' : ' '));
+        }
+        printf("\n");
+    }
+    ret = 0;
+
 error_return:
     return ret;
 }
