@@ -7,6 +7,7 @@ OBJS	:= main.o \
 	mc_button.o \
 	mc_menu.o \
 	mc_pdf.o \
+	mc_pdfview.o \
 	misc.o \
 	file_open.o \
 	config.o \

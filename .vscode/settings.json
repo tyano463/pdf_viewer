@@ -42,6 +42,8 @@
         "stdint.h": "c",
         "string.h": "c",
         "stdbool.h": "c",
-        "xlib.h": "c"
+        "xlib.h": "c",
+        "mc_pdf.h": "c",
+        "fitz.h": "c"
     }
 }
