@@ -4,6 +4,8 @@
 #include "misc.h"
 #include "dlog.h"
 
+#define PATH_MAX 4096
+
 bool file_exists(const char *path)
 {
     int status;
@@ -37,14 +39,32 @@ static int compare_str(const void *a, const void *b)
     return strcmp(str_a, str_b);
 }
 
-int get_file_list(char ***file_list, int *file_count)
+bool match_extension(const char *filename, const char **ext)
+{
+    if (!ext || !(*ext))
+        return true;
+
+    const char *dot = strrchr(filename, '.');
+    if (!dot)
+        return false;
+    for (int i = 0; ext[i] != NULL; i++)
+    {
+        if (strcasecmp(dot, ext[i]) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+int get_file_list(const char *cwd, char ***file_list, int *file_count, const char **ext)
 {
     DIR *dir;
     struct dirent *ent;
     int count = 0;
 
     // First pass: count the number of files
-    if ((dir = opendir(".")) == NULL)
+    if ((dir = opendir(cwd)) == NULL)
     {
         perror("opendir");
         return -1;
@@ -52,7 +72,14 @@ int get_file_list(char ***file_list, int *file_count)
 
     while ((ent = readdir(dir)) != NULL)
     {
-        count++;
+        if (strcmp(ent->d_name, ".") != 0)
+        {
+            // ディレクトリまたは拡張子が一致するファイルをカウント
+            if (ent->d_type == DT_DIR || match_extension(ent->d_name, ext))
+            {
+                count++;
+            }
+        }
     }
     closedir(dir);
 
@@ -65,7 +92,7 @@ int get_file_list(char ***file_list, int *file_count)
     }
 
     // Second pass: store the file names
-    if ((dir = opendir(".")) == NULL)
+    if ((dir = opendir(cwd)) == NULL)
     {
         perror("opendir");
         free(*file_list);
@@ -75,19 +102,26 @@ int get_file_list(char ***file_list, int *file_count)
     count = 0;
     while ((ent = readdir(dir)) != NULL)
     {
-        (*file_list)[count] = strdup(ent->d_name);
-        if ((*file_list)[count] == NULL)
+        if (strcmp(ent->d_name, ".") != 0)
         {
-            perror("strdup");
-            for (int i = 0; i < count; i++)
+            // ディレクトリまたは拡張子が一致するファイルを保存
+            if (ent->d_type == DT_DIR || match_extension(ent->d_name, ext))
             {
-                free((*file_list)[i]);
+                (*file_list)[count] = strdup(ent->d_name);
+                if ((*file_list)[count] == NULL)
+                {
+                    perror("strdup");
+                    for (int i = 0; i < count; i++)
+                    {
+                        free((*file_list)[i]);
+                    }
+                    free(*file_list);
+                    closedir(dir);
+                    return -1;
+                }
+                count++;
             }
-            free(*file_list);
-            closedir(dir);
-            return -1;
         }
-        count++;
     }
     closedir(dir);
 
@@ -161,4 +195,102 @@ bool is_pdf(const char *path)
 
 error_return:
     return ret;
+}
+
+char *fullpath(const char *s)
+{
+
+    char *resolved_path = malloc(PATH_MAX);
+    if (resolved_path == NULL)
+    {
+        perror("malloc");
+        return NULL;
+    }
+
+    if (realpath(s, resolved_path) == NULL)
+    {
+        perror("realpath");
+        free(resolved_path);
+        return NULL;
+    }
+
+    return resolved_path;
+}
+
+char *move_dir(char *d, const char *to)
+{
+    char *p = NULL;
+    char *buf = NULL;
+
+    ERR_RETn(!d || !(*d) || !to || !(*to));
+
+    buf = malloc(PATH_MAX);
+    ERR_RETn(!buf);
+
+    p = malloc(PATH_MAX);
+    ERR_RETn(!p);
+
+    sprintf(buf, "%s/%s/", d, to);
+    if (!realpath(buf, p))
+    {
+        free(p);
+        p = NULL;
+        goto error_return;
+    }
+
+error_return:
+    if (d)
+        free(d);
+    if (buf)
+        free(buf);
+    return p;
+}
+
+bool is_dir(const char *base, const char *file)
+{
+    char *buf = NULL;
+    char *resolved = NULL;
+    bool ret = false;
+    struct stat st_buf;
+
+    ERR_RETn(!base || !(*base) || !file || !(*file));
+
+    buf = malloc(PATH_MAX);
+    resolved = malloc(PATH_MAX);
+
+    sprintf(buf, "%s/%s", base, file);
+    ERR_RETn(!realpath(buf, resolved));
+
+    if (!stat(resolved, &st_buf))
+    {
+        ret = S_ISDIR(st_buf.st_mode);
+    }
+
+error_return:
+    if (buf)
+        free(buf);
+    if (resolved)
+        free(resolved);
+    return ret;
+}
+
+SwipeDirection detect_swipe(point_t *st, point_t *en)
+{
+    SwipeDirection direction = NONE;
+
+    int dx = en->x - st->x;
+    int dy = en->y - st->y;
+
+    if (abs(dx) < abs(dy))
+    {
+        if (abs(dy) > SWIPE_THRESHOLD)
+            direction = dy > 0 ? SWIPE_DOWN : SWIPE_UP;
+    }
+    else
+    {
+        if (abs(dx) > SWIPE_THRESHOLD)
+            direction = dx > 0 ? SWIPE_RIGHT : SWIPE_LEFT;
+    }
+
+    return direction;
 }

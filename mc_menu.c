@@ -4,8 +4,12 @@
 #include "misc.h"
 #include "dlog.h"
 
-static bool shown = false;
+/** definitions */
 static int menu_pos(int y, int lh);
+static void show(void *arg);
+
+/** variables */
+static bool shown = false;
 
 static void draw(void *arg, XEvent *event)
 {
@@ -42,9 +46,9 @@ static void draw(void *arg, XEvent *event)
         }
         XFreeFontSet(a->display, fontset);
         break;
-    case ButtonRelease:
-        break;
     case ButtonPress:
+        break;
+    case ButtonRelease:
         menu_ind = menu_pos(event->xbutton.y, lh);
         if (0 <= menu_ind && menu_ind < MAX_MENU_ITEMS && menu->menu_items[menu_ind].onMenuTapped)
         {
@@ -52,6 +56,10 @@ static void draw(void *arg, XEvent *event)
             dlog("pos:%d (%d, %d)", menu_ind, event->xbutton.x, event->xbutton.y);
 
             menu->menu_items[menu_ind].onMenuTapped(a, menu->menu_items[menu_ind].callback);
+            if (shown)
+            {
+                show(menu);
+            }
         }
         break;
     default:
@@ -73,10 +81,13 @@ static void show(void *arg)
     if (shown)
     {
         XUnmapWindow(menu->attrs->display, menu->menu);
+        menu->attrs->redraw(menu->attrs);
     }
     else
     {
         XMapWindow(menu->attrs->display, menu->menu);
+        XRaiseWindow(menu->attrs->display, menu->menu);
+        XFlush(menu->attrs->display);
     }
     shown = !shown;
 }
@@ -99,10 +110,11 @@ mc_menu_t *create_menu(win_attr_t *attrs, rect_t *rect)
     menu->menu = XCreateWindow(attrs->display, attrs->window, rect->l, rect->t, rect->w, rect->h, 0, CopyFromParent, InputOutput, CopyFromParent, attrs->mask, attrs->swa);
     XSelectInput(attrs->display, menu->menu, ExposureMask | ButtonPressMask | ButtonReleaseMask);
 
-    attrs->windows[attrs->wcnt] = menu->menu;
-    attrs->draw_cb[attrs->wcnt] = draw;
-    attrs->destroy_cb[attrs->wcnt] = destroy;
-    attrs->args[attrs->wcnt] = (void *)menu;
+    attrs->children[attrs->wcnt].window = menu->menu;
+    attrs->children[attrs->wcnt].draw_cb = draw;
+    attrs->children[attrs->wcnt].destroy_cb = destroy;
+    attrs->children[attrs->wcnt].arg = (void *)menu;
+    // attrs->children[attrs->wcnt].most_front = true;
     attrs->wcnt++;
 
     menu->show = show;

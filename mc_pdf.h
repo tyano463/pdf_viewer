@@ -13,6 +13,7 @@ typedef struct str_mcpdf_page
     uint8_t *b;
     fz_page *page;
     fz_pixmap *pix;
+    int pages;
     // fz_matrix mtx;
 } mcpdf_page_t;
 

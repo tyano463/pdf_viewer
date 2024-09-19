@@ -13,6 +13,6 @@ typedef struct str_file_open
     char *cur_dir;
     int (*cb)(win_attr_t *, void *);
 } file_open_t;
-void show_file_list(win_attr_t *, void *);
+void show_file_list(win_attr_t *attr, void *arg, const char **ext);
 
 #endif

@@ -79,10 +79,11 @@ mc_button_t *create_button(win_attr_t *attrs, rect_t *rect)
     XSelectInput(attrs->display, button->button, ExposureMask | ButtonPressMask | ButtonReleaseMask);
     XMapWindow(attrs->display, button->button);
 
-    attrs->windows[attrs->wcnt] = button->button;
-    attrs->draw_cb[attrs->wcnt] = draw;
-    attrs->destroy_cb[attrs->wcnt] = destroy;
-    attrs->args[attrs->wcnt] = (void *)button;
+    attrs->children[attrs->wcnt].window = button->button;
+    attrs->children[attrs->wcnt].draw_cb = draw;
+    attrs->children[attrs->wcnt].destroy_cb = destroy;
+    attrs->children[attrs->wcnt].arg = (void *)button;
+    attrs->children[attrs->wcnt].most_front = true;
     attrs->wcnt++;
 
 error_return:

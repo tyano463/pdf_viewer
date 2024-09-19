@@ -8,9 +8,10 @@ typedef struct str_viewer
     Window parent;
     Window window;
     win_attr_t *attr;
+    XImage *image;
+    int pageno;
+    int pages;
 } viewer_t;
-
-viewer_t *create_view(win_attr_t *attr);
 
 int open_pdf(win_attr_t *attr, void *arg);
 

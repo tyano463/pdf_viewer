@@ -95,6 +95,7 @@ int get_pdf(mcpdf_page_t *page, int pageno, rect_t *rect)
     ERR_RETn(pageno < 0 || pages < 1 || pageno >= pages);
 
     page->page = fz_load_page(ctx, doc, pageno);
+    page->pages = pages;
     resize = get_fit_size(rect, page->page);
 
     fz_matrix mtx = fz_scale(resize, resize);
@@ -120,10 +121,10 @@ int get_pdf(mcpdf_page_t *page, int pageno, rect_t *rect)
             page->b[y * page->w * 4 + (x * 4) + 1] = p[(x * 3) + 1];
             page->b[y * page->w * 4 + (x * 4) + 2] = p[(x * 3) + 0];
             page->b[y * page->w * 4 + (x * 4) + 3] = 0xff;
-            int val = (int)p[(x * 3) + 0] + (int)p[(x * 3) + 1] + (int)p[(x * 3) + 2];
-            printf("%c", ((val < 384) ? '*' : ' '));
+            // int val = (int)p[(x * 3) + 0] + (int)p[(x * 3) + 1] + (int)p[(x * 3) + 2];
+            // printf("%c", ((val < 384) ? '*' : ' '));
         }
-        printf("\n");
+        // printf("\n");
     }
     ret = 0;
 

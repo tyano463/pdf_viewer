@@ -15,6 +15,12 @@
 
 #define MAX_WINDOW 10
 
+static void redraw(win_attr_t *attr);
+static void window_flush(win_attr_t *attr);
+static void show_pdf_midi(win_attr_t *attr, void *arg);
+
+static const char *ext[] = {".pdf", ".mid", NULL};
+
 void register_window_attrs(win_attr_t *attrs, Display *display, Window window, int screen, GC *gc, Colormap *colormap, XSetWindowAttributes *swa, unsigned long mask)
 {
     attrs->display = display;
@@ -24,20 +30,17 @@ void register_window_attrs(win_attr_t *attrs, Display *display, Window window, i
     attrs->colormap = colormap;
     attrs->swa = swa;
     attrs->mask = mask;
-    attrs->windows = calloc(sizeof(Window *) * MAX_WINDOW, 1);
-    attrs->draw_cb = calloc(sizeof(drawfunc_t *) * MAX_WINDOW, 1);
-    attrs->destroy_cb = calloc(sizeof(drawfunc_t *) * MAX_WINDOW, 1);
-    attrs->args = calloc(sizeof(void *) * MAX_WINDOW, 1);
-    attrs->windows[0] = window;
+    attrs->children = calloc(sizeof(cwin_t) * MAX_WINDOW, 1);
+    attrs->children[0].window = window;
     attrs->wcnt = 1;
+    attrs->flush = window_flush;
+    attrs->redraw = redraw;
 }
 
 void exit_app(win_attr_t *attr, void *arg)
 {
     exit(0);
 }
-
-
 
 int main()
 {
@@ -88,7 +91,7 @@ int main()
     button->onClick = menu->show;
     button->onClickArg = menu;
     int m_ind = 0;
-    menu->menu_items[m_ind++] = (menu_item_t){"File Open", show_file_list, open_pdf};
+    menu->menu_items[m_ind++] = (menu_item_t){"File Open", show_pdf_midi, open_pdf};
     menu->menu_items[m_ind++] = (menu_item_t){"Exit", exit_app, NULL};
 
     // メインウィンドウにイベントマスクを設定
@@ -114,10 +117,11 @@ int main()
 
         for (i = 0; i < attrs.wcnt; i++)
         {
-            if (event.xexpose.window == attrs.windows[i])
+            if (event.xexpose.window == attrs.children[i].window)
             {
-                if (attrs.draw_cb[i])
-                    attrs.draw_cb[i](attrs.args[i], &event);
+                // dlog("received w:%lu %p", event.xexpose.window, attrs.draw_cb[i]);
+                if (attrs.children[i].draw_cb)
+                    attrs.children[i].draw_cb(attrs.children[i].arg, &event);
             }
         }
     }
@@ -126,12 +130,40 @@ int main()
     XFreeGC(display, gc);
     for (i = 1; i < attrs.wcnt; i++)
     {
-        if (attrs.destroy_cb[i])
-            attrs.destroy_cb[i](attrs.args[i]);
+        if (attrs.children[i].destroy_cb)
+            attrs.children[i].destroy_cb(attrs.children[i].arg);
     }
     XDestroyWindow(display, window);
     XCloseDisplay(display);
 
 error_return:
     return 0;
+}
+
+static void redraw(win_attr_t *attr)
+{
+    for (int i = 0; i < attr->wcnt; i++)
+    {
+        if (attr->children[i].redraw)
+        {
+            attr->children[i].draw_cb(attr->children[i].arg, NULL);
+        }
+    }
+}
+static void window_flush(win_attr_t *attr)
+{
+    for (int i = 0; i < attr->wcnt; i++)
+    {
+        if (attr->children[i].most_front)
+        {
+            XRaiseWindow(attr->display, attr->children[i].window);
+        }
+    }
+    XFlush(attr->display);
+    dlog("flush");
+}
+
+static void show_pdf_midi(win_attr_t *attr, void *arg)
+{
+    show_file_list(attr, arg, ext);
 }

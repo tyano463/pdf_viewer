@@ -12,10 +12,41 @@ static Window create_close_button(file_open_t *f, win_attr_t *attr, Window windo
 static void file_tapped(void *arg, XEvent *event);
 static int get_line_height(void);
 static void close_dialog(file_open_t *f);
-
+static const char **g_ext;
 static int g_line_height;
 
-void show_file_list(win_attr_t *attr, void *arg)
+void draw_file_list(win_attr_t *attr, file_open_t *f, const char **ext)
+{
+    char **file_list;
+    int file_cnt;
+    int y_offset = 20;
+    XFontSet fontset;
+    Window child_window = f->window;
+
+    if (f->file_list)
+        free_file_list(f->file_list, f->file_count);
+
+    get_file_list(f->cur_dir, &file_list, &file_cnt, ext);
+    f->file_list = file_list;
+    f->file_count = file_cnt;
+
+    fontset = create_fontset(attr->display);
+    XClearWindow(attr->display, child_window);
+    XColor color;
+    rgb2xcolor(attr, &color, 0, 0, 0);
+    XSetForeground(attr->display, *attr->gc, color.pixel);
+    for (int i = 0; i < file_cnt; i++)
+    {
+        Xutf8DrawString(attr->display, child_window, fontset, *attr->gc, g_line_height / 2, y_offset, file_list[i], strlen(file_list[i]));
+        y_offset += g_line_height;
+    }
+
+    XSelectInput(attr->display, child_window, ButtonPressMask | ButtonReleaseMask | ExposureMask);
+    free_fontset(attr->display, fontset);
+}
+
+
+void show_file_list(win_attr_t *attr, void *arg, const char **ext)
 {
     dlog("");
     if (attr == NULL || attr->display == NULL || attr->window == 0 || attr->window == 0)
@@ -27,68 +58,52 @@ void show_file_list(win_attr_t *attr, void *arg)
     Display *display = attr->display;
     Window main_window = attr->window;
     int screen = attr->screen;
-    GC gc = *attr->gc;
     XSetWindowAttributes swa = *attr->swa;
     unsigned long mask = attr->mask;
     Window button;
     file_open_t *f;
+    g_ext = ext;
 
     g_line_height = get_line_height();
 
     XWindowAttributes wa;
     XGetWindowAttributes(display, main_window, &wa);
-    f = malloc(sizeof(file_open_t));
+    f = calloc(sizeof(file_open_t), 1);
 
     // Create a child window
-    Window child_window = XCreateWindow(display, main_window, 0, 0, wa.width, wa.height, 1,
-                                        DefaultDepth(display, screen), InputOutput,
-                                        DefaultVisual(display, screen), mask, &swa);
+    Window child_window;
 
+    child_window = XCreateWindow(display, main_window, 0, 0, wa.width, wa.height, 1,
+                                 DefaultDepth(display, screen), InputOutput,
+                                 DefaultVisual(display, screen), mask, &swa);
+
+    dlog("w:%lu", child_window);
     XMapWindow(display, child_window);
-    XFlush(display);
+    XFlush(attr->display);
 
-    char **file_list;
-    int file_cnt = -1;
-    XFontSet fontset;
-    int y_offset = 20;
+    f->cur_dir = fullpath(".");
+    f->window = child_window;
+    draw_file_list(attr, f, g_ext);
 
-    get_file_list(&file_list, &file_cnt);
-    fontset = create_fontset(display);
-    XClearWindow(display, child_window);
-    XColor color;
-    rgb2xcolor(attr, &color, 0, 0, 0);
-    XSetForeground(attr->display, *attr->gc, color.pixel);
-    for (int i = 0; i < file_cnt; i++)
-    {
-        Xutf8DrawString(display, child_window, fontset, gc, g_line_height / 2, y_offset, file_list[i], strlen(file_list[i]));
-        y_offset += g_line_height;
-    }
-
-    XSelectInput(display, child_window, ButtonPressMask | ButtonReleaseMask | ExposureMask);
-
-    attr->windows[attr->wcnt] = child_window;
-    attr->args[attr->wcnt] = f;
-    attr->draw_cb[attr->wcnt++] = file_tapped;
-    f->cur_dir = NULL;
-    f->file_list = file_list;
-    f->file_count = file_cnt;
+    attr->children[attr->wcnt].window = child_window;
+    attr->children[attr->wcnt].arg = f;
+    attr->children[attr->wcnt++].draw_cb = file_tapped;
+    dlog("file_tapped:%p", file_tapped);
 
     // button create here
     button = create_close_button(f, attr, child_window);
 
-    f->window = child_window;
     f->attr = attr;
     f->button = button;
     f->cb = arg;
 
-    free_fontset(display, fontset);
-    // Draw the file list in the child window
-    XFlush(display);
+    XFlush(attr->display);
 }
 
 static void file_tapped(void *arg, XEvent *event)
 {
-    if (event->type == Expose)
+    dlog("IN %d", event->type);
+    if (event->type == Expose || event->type == ButtonPress)
         return;
 
     file_open_t *f = arg;
@@ -101,41 +116,36 @@ static void file_tapped(void *arg, XEvent *event)
     if (strcmp(fname, ".") == 0)
         return;
 
-    char *cwd = f->cur_dir;
-    if (cwd == NULL)
+    if (is_dir(f->cur_dir, fname))
     {
-        cwd = malloc(4096);
-        getcwd(cwd, 4096);
-        f->cur_dir = cwd;
-    }
-    if (strcmp(fname, "..") == 0)
-    {
-        dlog("%s ", cwd);
+        dlog("is dir %s ", f->cur_dir);
+        f->cur_dir = move_dir(f->cur_dir, fname);
+        XClearWindow(f->attr->display, f->window);
+        draw_file_list(f->attr, f, g_ext);
     }
     else
     {
-        dlog("%s %s", cwd, fname);
+        dlog("is file %s %s", f->cur_dir, fname);
         close_dialog(f);
         if (f->cb)
-            f->cb(f->attr, (void*)fname);
+            f->cb(f->attr, (void *)fname);
         free(f);
     }
 }
 
 static void close_dialog(file_open_t *f)
 {
-    // hear
     dlog("");
     int removed = 0;
     int rindex[] = {-1, -1};
 
     for (int i = 0; i < f->attr->wcnt; i++)
     {
-        if (f->attr->windows[i] == f->button)
+        if (f->attr->children[i].window == f->button)
         {
             rindex[0] = i;
         }
-        else if (f->attr->windows[i] == f->window)
+        else if (f->attr->children[i].window == f->window)
         {
             rindex[1] = i;
         }
@@ -149,10 +159,10 @@ static void close_dialog(file_open_t *f)
                 XDestroyWindow(f->attr->display, f->window);
             f->button = 0;
             f->window = 0;
-            f->attr->windows[rindex[i]] = 0;
-            f->attr->args[rindex[i]] = NULL;
-            f->attr->draw_cb[rindex[i]] = NULL;
-            f->attr->destroy_cb[rindex[i]] = NULL;
+            f->attr->children[rindex[i]].window = 0;
+            f->attr->children[rindex[i]].arg = NULL;
+            f->attr->children[rindex[i]].draw_cb = NULL;
+            f->attr->children[rindex[i]].destroy_cb = NULL;
             removed++;
         }
     }
@@ -160,20 +170,20 @@ static void close_dialog(file_open_t *f)
     int new_index = 0;
     for (int i = 0; i < f->attr->wcnt; i++)
     {
-        if (f->attr->windows[i] != 0)
+        if (f->attr->children[i].window != 0)
         {
             if (new_index != i)
             {
-                f->attr->windows[new_index] = f->attr->windows[i];
-                f->attr->args[new_index] = f->attr->args[i];
-                f->attr->draw_cb[new_index] = f->attr->draw_cb[i];
-                f->attr->destroy_cb[new_index] = f->attr->destroy_cb[i];
+                f->attr->children[new_index].window = f->attr->children[i].window;
+                f->attr->children[new_index].arg = f->attr->children[i].arg;
+                f->attr->children[new_index].draw_cb = f->attr->children[i].draw_cb;
+                f->attr->children[new_index].destroy_cb = f->attr->children[i].destroy_cb;
 
                 // 元の位置をクリア
-                f->attr->windows[i] = 0;
-                f->attr->args[i] = NULL;
-                f->attr->draw_cb[i] = NULL;
-                f->attr->destroy_cb[i] = NULL;
+                f->attr->children[i].window = 0;
+                f->attr->children[i].arg = NULL;
+                f->attr->children[i].draw_cb = NULL;
+                f->attr->children[i].destroy_cb = NULL;
             }
             new_index++;
         }
@@ -208,9 +218,9 @@ static Window create_close_button(file_open_t *f, win_attr_t *attr, Window windo
     XStoreName(attr->display, button, "Close");
     XSelectInput(attr->display, button, ButtonPressMask | ButtonReleaseMask | ExposureMask);
 
-    attr->args[attr->wcnt] = f;
-    attr->windows[attr->wcnt] = button;
-    attr->draw_cb[attr->wcnt++] = close_dialog_tapped;
+    attr->children[attr->wcnt].arg = f;
+    attr->children[attr->wcnt].window = button;
+    attr->children[attr->wcnt++].draw_cb = close_dialog_tapped;
 
     // Draw the button label
     XClearWindow(attr->display, button);

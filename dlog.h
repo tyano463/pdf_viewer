@@ -36,5 +36,14 @@
             goto error_return; \
     }
 
+#define ERR_RETnf(c, f)        \
+    {                          \
+        if (c)                 \
+        {                      \
+            f;                 \
+            goto error_return; \
+        }                      \
+    }
+
 FILE *dlog_fp(void);
 #endif
