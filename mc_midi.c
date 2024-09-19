@@ -29,8 +29,10 @@ int open_midi(win_attr_t *attr, void *arg, int (*callback)(win_attr_t *, void *)
     int status = pclose(fp);
     ERR_RET(status, "convert error: %d", status);
 
-    if (callback)
-        return callback(attr, arg);
+    if (callback) {
+        free(cmd);
+        return callback(attr, pdf_path);
+    }
 
 error_return:
     if (cmd)
