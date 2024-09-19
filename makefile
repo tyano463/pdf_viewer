@@ -8,6 +8,7 @@ OBJS	:= main.o \
 	mc_menu.o \
 	mc_pdf.o \
 	mc_pdfview.o \
+	mc_midi.o \
 	misc.o \
 	file_open.o \
 	config.o \

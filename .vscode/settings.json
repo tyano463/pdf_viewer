@@ -44,6 +44,8 @@
         "stdbool.h": "c",
         "xlib.h": "c",
         "mc_pdf.h": "c",
-        "fitz.h": "c"
+        "fitz.h": "c",
+        "features-time64.h": "c",
+        "features.h": "c"
     }
 }

@@ -8,6 +8,7 @@
 #include "mc_button.h"
 #include "mc_menu.h"
 #include "mc_pdf.h"
+#include "mc_midi.h"
 #include "mc_pdfview.h"
 #include "misc.h"
 #include "file_open.h"
@@ -18,6 +19,7 @@
 static void redraw(win_attr_t *attr);
 static void window_flush(win_attr_t *attr);
 static void show_pdf_midi(win_attr_t *attr, void *arg);
+static int open_file(win_attr_t *attr, void *arg);
 
 static const char *ext[] = {".pdf", ".mid", NULL};
 
@@ -91,7 +93,7 @@ int main()
     button->onClick = menu->show;
     button->onClickArg = menu;
     int m_ind = 0;
-    menu->menu_items[m_ind++] = (menu_item_t){"File Open", show_pdf_midi, open_pdf};
+    menu->menu_items[m_ind++] = (menu_item_t){"File Open", show_pdf_midi, open_file};
     menu->menu_items[m_ind++] = (menu_item_t){"Exit", exit_app, NULL};
 
     // メインウィンドウにイベントマスクを設定
@@ -166,4 +168,13 @@ static void window_flush(win_attr_t *attr)
 static void show_pdf_midi(win_attr_t *attr, void *arg)
 {
     show_file_list(attr, arg, ext);
+}
+
+static int open_file(win_attr_t *attr, void *arg)
+{
+    if (is_pdf((const char *)arg))
+        return open_pdf(attr, arg);
+    else if(is_midi((const  char*)arg))
+        return open_midi(attr, arg, open_pdf);
+    return -1;
 }

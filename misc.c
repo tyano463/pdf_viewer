@@ -185,16 +185,27 @@ void free_fontset(Display *display, XFontSet fontset)
     XFreeFontSet(display, fontset);
 }
 
-bool is_pdf(const char *path)
+static bool hasext(const char *path, const char *expect)
 {
+
     bool ret = false;
 
     ERR_RETn(!path);
     const char *ext = strrchr(path, '.');
-    ret = ((ext != NULL) && (strcmp(ext, ".pdf") == 0));
+    ret = ((ext != NULL) && (strcasecmp(ext, expect) == 0));
 
 error_return:
     return ret;
+}
+
+bool is_pdf(const char *path)
+{
+    return hasext(path, ".pdf");
+}
+
+bool is_midi(const char *path)
+{
+    return hasext(path, ".mid");
 }
 
 char *fullpath(const char *s)
@@ -293,4 +304,24 @@ SwipeDirection detect_swipe(point_t *st, point_t *en)
     }
 
     return direction;
+}
+
+char *get_pdf_path(char *pdf_path, char *path)
+{
+    int cnt = 1;
+    char *ret = NULL;
+
+    sprintf(pdf_path, "%s", path);
+    const char *p = strrchr(pdf_path, '.');
+    ERR_RETn(!p);
+
+    sprintf(p, ".pdf");
+    while (file_exists(pdf_path))
+    {
+        sprintf(p, "_%d.pdf", cnt++);
+    }
+    ret = pdf_path;
+
+error_return:
+    return ret;
 }

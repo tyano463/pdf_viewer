@@ -45,7 +45,6 @@ void draw_file_list(win_attr_t *attr, file_open_t *f, const char **ext)
     free_fontset(attr->display, fontset);
 }
 
-
 void show_file_list(win_attr_t *attr, void *arg, const char **ext)
 {
     dlog("");
