@@ -1,0 +1,89 @@
+(kicad_sch
+	(version 20231120)
+	(generator "eeschema")
+	(generator_version "8.0")
+	(uuid "aeb14311-f547-46aa-9ccf-c37d4e677946")
+	(paper "A3")
+	(lib_symbols)
+	(sheet
+		(at 252.73 883.92)
+		(size 195.58 22.86)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "9f56226f-8693-4109-bdee-cc6cc9133f78")
+		(property "Sheetname" "clock"
+			(at 252.73 883.2084 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "clock.kicad_sch"
+			(at 252.73 907.3646 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "pdf_viewer"
+				(path "/aeb14311-f547-46aa-9ccf-c37d4e677946"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet
+		(at -11.43 421.64)
+		(size 426.72 245.11)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "ff3ea0c8-4110-4ab5-9580-0d6ed033ee1a")
+		(property "Sheetname" "Power"
+			(at -11.43 420.9284 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "power.kicad_sch"
+			(at -11.43 667.3346 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "pdf_viewer"
+				(path "/aeb14311-f547-46aa-9ccf-c37d4e677946"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+)

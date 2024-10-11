@@ -1,6 +1,14 @@
 {
   "board": {
     "3dviewports": [],
+    "design_settings": {
+      "defaults": {},
+      "diff_pair_dimensions": [],
+      "drc_exclusions": [],
+      "rules": {},
+      "track_widths": [],
+      "via_dimensions": []
+    },
     "ipc2581": {
       "dist": "",
       "distpn": "",
@@ -376,8 +384,16 @@
   },
   "sheets": [
     [
-      "d5ae9a86-6306-4c1c-ad15-ac4f67c115ac",
+      "aeb14311-f547-46aa-9ccf-c37d4e677946",
       "Root"
+    ],
+    [
+      "ff3ea0c8-4110-4ab5-9580-0d6ed033ee1a",
+      "Power"
+    ],
+    [
+      "9f56226f-8693-4109-bdee-cc6cc9133f78",
+      "clock"
     ]
   ],
   "text_variables": {}
