@@ -5,7 +5,7 @@ this repository is under construction.
 
 - [mupdf](https://mupdf.com/)
 - [X11](https://www.x.org/)
-- Linux environment
+- [Linux environment](https://www.linux.org/pages/download/)
 
 # Build
 
