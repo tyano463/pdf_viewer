@@ -6,6 +6,44 @@
 	(paper "A3")
 	(lib_symbols)
 	(sheet
+		(at 123.19 684.53)
+		(size 121.92 26.67)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "0a7235a1-1bba-4703-a84f-95328807a683")
+		(property "Sheetname" "dsi-edp-converter"
+			(at 123.19 683.8184 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "dsi-edp-converter.kicad_sch"
+			(at 123.19 711.7846 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "pdf_viewer"
+				(path "/aeb14311-f547-46aa-9ccf-c37d4e677946"
+					(page "4")
+				)
+			)
+		)
+	)
+	(sheet
 		(at 252.73 883.92)
 		(size 195.58 22.86)
 		(fields_autoplaced yes)
