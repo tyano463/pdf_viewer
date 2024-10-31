@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "mc_midi.h"
 #include "misc.h"
 #include "dlog.h"
@@ -7,9 +8,9 @@
 
 int open_midi(win_attr_t *attr, void *arg, int (*callback)(win_attr_t *, void *))
 {
-    const char *path = (const char *)arg;
-    const char *cmd = NULL;
-    const char *pdf_path = NULL;
+    char *path = (char *)arg;
+    char *cmd = NULL;
+    char *pdf_path = NULL;
 
     pdf_path = malloc(PATH_MAX);
     ERR_RETn(!pdf_path);
@@ -23,7 +24,7 @@ int open_midi(win_attr_t *attr, void *arg, int (*callback)(win_attr_t *, void *)
     snprintf(cmd, PATH_MAX, CONVERT_COMMNAD " %s %s", path, pdf_path);
     // convert
     dlog("converting %s -> %s", path, pdf_path);
-    FILE *fp = popen(cmd);
+    FILE *fp = popen(cmd, "r");
     ERR_RETn(!fp);
 
     int status = pclose(fp);

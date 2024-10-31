@@ -21,7 +21,7 @@ static void init(void)
         fz_register_document_handlers(ctx);
     fz_catch(ctx)
     {
-        fz_report_error(ctx);
+        //fz_report_error(ctx);
         dlog("cannot register document handlers");
         fz_drop_context(ctx);
         ctx = NULL;
@@ -44,7 +44,7 @@ int load_pdf(const char *fpath)
         doc = fz_open_document(ctx, fpath);
     fz_catch(ctx)
     {
-        fz_report_error(ctx);
+        //fz_report_error(ctx);
         dlog("cannot open document");
         doc = NULL;
         goto error_return;
@@ -54,7 +54,7 @@ int load_pdf(const char *fpath)
         pages = fz_count_pages(ctx, doc);
     fz_catch(ctx)
     {
-        fz_report_error(ctx);
+        //fz_report_error(ctx);
         dlog("cannot count number of pages");
         fz_drop_document(ctx, doc);
         doc = NULL;

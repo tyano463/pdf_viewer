@@ -312,7 +312,7 @@ char *get_pdf_path(char *pdf_path, char *path)
     char *ret = NULL;
 
     sprintf(pdf_path, "%s", path);
-    const char *p = strrchr(pdf_path, '.');
+    char *p = strrchr(pdf_path, '.');
     ERR_RETn(!p);
 
     sprintf(p, ".pdf");

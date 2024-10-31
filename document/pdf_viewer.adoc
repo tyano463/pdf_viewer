@@ -1,0 +1,15 @@
+# PDF Viewer
+:toc:
+:toc-levels: 3
+:toc-title: 目次
+:nofooter:
+:sectnums:
+:abstract-caption: 概要
+:figure-caption: 図
+:table-caption: 表
+
+
+++++
+<script src="scripts/custom.js"></script>
+++++
+

@@ -10,6 +10,7 @@ this repository is under construction.
 # Build
 
 ```shell
+cd source
 make
 ```
 
