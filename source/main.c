@@ -49,7 +49,7 @@ int main()
     Display *display;
     Window window;
     XEvent event;
-    int screen, i;
+    int screen, i, ret;
     GC gc;
     XGCValues values;
     Colormap colormap;
@@ -75,9 +75,11 @@ int main()
 
     window = XCreateWindow(display, RootWindow(display, screen), 1320, 0, 600, 1024, 0,
                            CopyFromParent, InputOutput, CopyFromParent, mask, &swa);
+    dlog("window:%x", window);
 
     // グラフィックスコンテキストを作成
     gc = XCreateGC(display, window, 0, &values);
+    dlog("gc:%x", gc);
     XSetForeground(display, gc, BlackPixel(display, screen));
     XSetBackground(display, gc, WhitePixel(display, screen));
 
@@ -97,11 +99,12 @@ int main()
     menu->menu_items[m_ind++] = (menu_item_t){"Exit", exit_app, NULL};
 
     // メインウィンドウにイベントマスクを設定
-    XSelectInput(display, window, ExposureMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask);
+    ret = XSelectInput(display, window, ExposureMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask);
+    dlog("XSelectInput:%d", ret);
     // 表示
-    XMapWindow(display, window);
+    ret = XMapWindow(display, window);
 
-    dlog("bef loop");
+    dlog("bef loop XMapWindow:%d", ret);
     // イベントループ
     while (true)
     {
