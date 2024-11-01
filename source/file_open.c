@@ -101,19 +101,17 @@ void show_file_list(win_attr_t *attr, void *arg, const char **ext)
 
 static void file_tapped(void *arg, XEvent *event)
 {
+    char *fpath;
     dlog("IN %d", event->type);
-    if (event->type == Expose || event->type == ButtonPress)
-        return;
+    ERR_RETn(event->type == Expose || event->type == ButtonPress);
 
     file_open_t *f = arg;
     int index = event->xbutton.y / g_line_height;
-    if (index >= f->file_count)
-        return;
+    ERR_RETn(index >= f->file_count);
 
     const char *fname = f->file_list[index];
 
-    if (strcmp(fname, ".") == 0)
-        return;
+    ERR_RETn(strcmp(fname, ".") == 0);
 
     if (is_dir(f->cur_dir, fname))
     {
@@ -125,11 +123,17 @@ static void file_tapped(void *arg, XEvent *event)
     else
     {
         dlog("is file %s %s", f->cur_dir, fname);
+        fpath = malloc(strlen(f->cur_dir) + strlen(fname) + 2);
+        ERR_RETn(!fpath);
+        sprintf(fpath, "%s/%s", f->cur_dir, fname);
         close_dialog(f);
         if (f->cb)
-            f->cb(f->attr, (void *)fname);
+            f->cb(f->attr, (void *)fpath);
         free(f);
+        free(fpath);
     }
+error_return:
+    return;
 }
 
 static void close_dialog(file_open_t *f)

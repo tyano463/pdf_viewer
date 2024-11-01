@@ -132,8 +132,9 @@ static void show_pdf(viewer_t *view)
 int open_pdf(win_attr_t *attr, void *arg)
 {
     const char *path = arg;
+    ERR_RETn(!path);
 
-    dlog("IN");
+    dlog("IN path:%s", path );
     ERR_RETn(!is_pdf(path));
     int ret = load_pdf(path);
     ERR_RETn(ret < 0);

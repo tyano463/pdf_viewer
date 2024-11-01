@@ -60,7 +60,6 @@ static void draw(void *arg, XEvent *event)
         {
             // menu tapped
             dlog("pos:%d (%d, %d)", menu_ind, event->xbutton.x, event->xbutton.y);
-
             menu->menu_items[menu_ind].onMenuTapped(a, menu->menu_items[menu_ind].callback);
             if (shown)
             {
