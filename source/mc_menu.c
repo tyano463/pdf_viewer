@@ -23,21 +23,27 @@ static void draw(void *arg, XEvent *event)
     int lh = 32;
 
     int menu_ind = -1;
+    int ret;
 
-    // dlog("IN");
+    dlog("IN %d", event->type);
 
     switch (event->type)
     {
     case Expose:
         rgb2xcolor(a, &color, 0xee, 0x82, 0xee);
-        XSetForeground(a->display, *a->gc, color.pixel);
-        XFillRectangle(a->display, menu->menu, *a->gc, 0, 0, menu->size.w, menu->size.h);
+        ret = XSetForeground(a->display, *a->gc, color.pixel);
+        dlog("XSetForeground:%d", ret);
+        ret = XFillRectangle(a->display, menu->menu, *a->gc, 0, 0, menu->size.w, menu->size.h);
+        dlog("XFillRectangle:%d", ret);
         rgb2xcolor(a, &color, 0, 0, 0);
-        XSetForeground(a->display, *a->gc, color.pixel);
+        ret = XSetForeground(a->display, *a->gc, color.pixel);
+        dlog("XSetForeground:%d", ret);
         setlocale(LC_CTYPE, "");
         fontset = XCreateFontSet(a->display, "-*-*-medium-r-normal--16-*-*-*-*-*-*-*", &missing_charset_list, &missing_charset_count, &default_string);
-        if (!fontset)
+        if (!fontset) {
+            dlog("XCreateFontSet error");
             break;
+        }
 
         for (int i = 0; menu->menu_items[i].menu_string; i++)
         {

@@ -25,11 +25,13 @@ error_return:
 
 void rgb2xcolor(win_attr_t *attrs, XColor *color, uint8_t r, uint8_t g, uint8_t b)
 {
+    Status status;
     color->red = r * 256;
     color->green = g * 256;
     color->blue = b * 256;
     color->flags = DoRed | DoGreen | DoBlue;
-    XAllocColor(attrs->display, *attrs->colormap, color);
+    status = XAllocColor(attrs->display, *attrs->colormap, color);
+    dlog("XAllocColor:%d", status);
 }
 
 static int compare_str(const void *a, const void *b)
