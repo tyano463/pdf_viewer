@@ -58,6 +58,7 @@ int main()
     win_attr_t attrs;
     mc_button_t *button;
     mc_menu_t *menu;
+    unsigned int dw, dh;
 
     // Xサーバーへの接続を開く
     display = XOpenDisplay(NULL);
@@ -72,8 +73,10 @@ int main()
     swa.background_pixel = WhitePixel(display, screen);
     swa.override_redirect = True;
     mask = CWBackPixel | CWBorderPixel | CWOverrideRedirect;
+    dw = DisplayWidth(display, screen);
+    dh = DisplayHeight(display, screen);
 
-    window = XCreateWindow(display, RootWindow(display, screen), 1320, 0, 600, 1024, 0,
+    window = XCreateWindow(display, RootWindow(display, screen), dw / 2, 0, dh, dw / 2, 0,
                            CopyFromParent, InputOutput, CopyFromParent, mask, &swa);
     dlog("window:%x", window);
 
