@@ -32,4 +32,5 @@ char *move_dir(char *base, const char *file);
 bool is_dir(const char *base, const char *file);
 SwipeDirection detect_swipe(point_t *st, point_t *en);
 char *get_pdf_path(char *pdf_path, char *path);
+void dump_font(XFontSet fontset);
 #endif

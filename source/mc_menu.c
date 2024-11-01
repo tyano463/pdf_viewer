@@ -45,6 +45,8 @@ static void draw(void *arg, XEvent *event)
             break;
         }
 
+        dump_font(fontset);
+
         for (int i = 0; menu->menu_items[i].menu_string; i++)
         {
             const char *s = menu->menu_items[i].menu_string;

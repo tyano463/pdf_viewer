@@ -327,3 +327,16 @@ char *get_pdf_path(char *pdf_path, char *path)
 error_return:
     return ret;
 }
+
+void dump_font(XFontSet fontset)
+{
+    int i, n;
+    XFontStruct **fonts;
+    char **font_names;
+
+    n = XFontsOfFontSet(fontset, &fonts, &font_names);
+    for (int i = 0; i < n; i++)
+    {
+        dlog("font:%s", font_names[i]);
+    }
+}
