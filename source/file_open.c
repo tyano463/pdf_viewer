@@ -80,7 +80,7 @@ void show_file_list(win_attr_t *attr, void *arg, const char **ext)
     XMapWindow(display, child_window);
     XFlush(attr->display);
 
-    f->cur_dir = fullpath(".");
+    f->cur_dir = fullpath("/opt/score");
     f->window = child_window;
     draw_file_list(attr, f, g_ext);
 
