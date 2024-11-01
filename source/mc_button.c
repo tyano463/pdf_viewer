@@ -57,6 +57,8 @@ static void destroy(void *arg)
 mc_button_t *create_button(win_attr_t *attrs, rect_t *rect)
 {
     mc_button_t *button = NULL;
+    Status status;
+    int ret;
 
     ERR_RET(!rect, "invalid argument");
 
@@ -64,6 +66,7 @@ mc_button_t *create_button(win_attr_t *attrs, rect_t *rect)
     ERR_RET(!button, "malloc failed");
 
     button->button = XCreateWindow(attrs->display, attrs->window, rect->l, rect->t, rect->w, rect->h, 0, CopyFromParent, InputOutput, CopyFromParent, attrs->mask, attrs->swa);
+    dlog("XCreateWindow button:%p", button->button);
     button->attrs = attrs;
 
     button->size.h = rect->h;
@@ -72,12 +75,16 @@ mc_button_t *create_button(win_attr_t *attrs, rect_t *rect)
     button->size.t = rect->t;
 
     // ボタンの色を設定
-    XAllocNamedColor(attrs->display, *attrs->colormap, "lightgrey", &button->color, &button->color);
-    XAllocNamedColor(attrs->display, *attrs->colormap, "darkgrey", &button->pressed_color, &button->pressed_color);
+    status = XAllocNamedColor(attrs->display, *attrs->colormap, "lightgrey", &button->color, &button->color);
+    dlog("XAllocNamedColor:%d", status);
+    status = XAllocNamedColor(attrs->display, *attrs->colormap, "darkgrey", &button->pressed_color, &button->pressed_color);
+    dlog("XAllocNamedColor:%d", status);
 
     // ボタンにイベントマスクを設定
-    XSelectInput(attrs->display, button->button, ExposureMask | ButtonPressMask | ButtonReleaseMask);
-    XMapWindow(attrs->display, button->button);
+    ret = XSelectInput(attrs->display, button->button, ExposureMask | ButtonPressMask | ButtonReleaseMask);
+    dlog("XSelectInput:%d", ret);
+    ret = XMapWindow(attrs->display, button->button);
+    dlog("XMapWindow:%d", ret);
 
     attrs->children[attrs->wcnt].window = button->button;
     attrs->children[attrs->wcnt].draw_cb = draw;

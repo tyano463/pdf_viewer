@@ -95,6 +95,7 @@ static void show(void *arg)
 mc_menu_t *create_menu(win_attr_t *attrs, rect_t *rect)
 {
     mc_menu_t *menu = NULL;
+    int ret;
 
     ERR_RET(!attrs | !rect, "invalid argument");
 
@@ -108,7 +109,9 @@ mc_menu_t *create_menu(win_attr_t *attrs, rect_t *rect)
     menu->size.h = rect->h;
 
     menu->menu = XCreateWindow(attrs->display, attrs->window, rect->l, rect->t, rect->w, rect->h, 0, CopyFromParent, InputOutput, CopyFromParent, attrs->mask, attrs->swa);
-    XSelectInput(attrs->display, menu->menu, ExposureMask | ButtonPressMask | ButtonReleaseMask);
+    dlog("menu XCreateWindow:%p", menu->menu);
+    ret = XSelectInput(attrs->display, menu->menu, ExposureMask | ButtonPressMask | ButtonReleaseMask);
+    dlog("XSelectInput:%d", ret);
 
     attrs->children[attrs->wcnt].window = menu->menu;
     attrs->children[attrs->wcnt].draw_cb = draw;
