@@ -39,7 +39,7 @@ static void draw(void *arg, XEvent *event)
         ret = XSetForeground(a->display, *a->gc, color.pixel);
         dlog("XSetForeground:%d", ret);
         setlocale(LC_CTYPE, "");
-        fontset = XCreateFontSet(a->display, "-*-*-medium-r-normal--16-*-*-*-*-*-*-*", &missing_charset_list, &missing_charset_count, &default_string);
+        fontset = XCreateFontSet(a->display, "-*-*-medium-r-normal--16-*-*-*-*-*-*jis*-*", &missing_charset_list, &missing_charset_count, &default_string);
         if (!fontset) {
             dlog("XCreateFontSet error");
             break;
