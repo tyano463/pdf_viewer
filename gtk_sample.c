@@ -19,6 +19,7 @@ gcc `pkg-config --libs gtk+-3.0` -lmupdf gtk_sample.o -o gtk_sample
 )";
 
 #define PDF_FILE "/home/tyano/workspace/pdf/mtex_sample/sample.pdf"
+#define SWIPE_MARGIN (50)
 
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
@@ -27,6 +28,31 @@ gcc `pkg-config --libs gtk+-3.0` -lmupdf gtk_sample.o -o gtk_sample
     {                                                                                  \
         g_print("%s(%d) %s " x "\n", __FILENAME__, __LINE__, __func__, ##__VA_ARGS__); \
     } while (0)
+
+#define ERR_RETn(c)            \
+    do                         \
+    {                          \
+        if (c)                 \
+            goto error_return; \
+    } while (0)
+
+
+/**
+ * There is no button definition in gtk.
+ * 
+ * The following is the gtk explanation.
+ * 
+ * /usr/include/gtk-3.0/gdk/gdkevents.h:706L
+ * 
+ * @button: the button which was pressed or released, numbered from 1 to 5.
+ *   Normally button 1 is the left mouse button, 2 is the middle button,
+ *   and 3 is the right button. On 2-button mice, the middle button can
+ *   often be simulated by pressing both mouse buttons together.
+ * 
+ */
+#define MOUSE_BUTTON_LEFT 1
+#define MOUSE_BUTTON_MIDDLE 2
+#define MOUSE_BUTTON_RIGHT 3
 
 typedef struct
 {
@@ -77,6 +103,46 @@ static void draw_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
     fz_drop_pixmap(pdf->ctx, pix);
 }
 
+//static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data)
+static gboolean motion_notify_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
+{
+    static gdouble start_x = -1;
+    static gdouble start_y = -1;
+    gdouble dx, dy;
+
+    ERR_RETn (event->button != MOUSE_BUTTON_LEFT);
+
+    if (event->type == GDK_BUTTON_PRESS)
+    {
+        // d("push %x %x (%.2f,%.2f)", event->button, event->state, event->x, event->y);
+        start_x = event->x;
+        start_y = event->y;
+    }
+    else if (event->type == GDK_BUTTON_RELEASE)
+    {
+        // d("release %x %x (%.2f,%.2f)", event->button, event->state, event->x, event->y);
+        dx = event->x - start_x;
+        dy = event->y - start_y;
+        if (abs(dx) < abs(dy))
+        {
+        }
+        else
+        {
+            if (dx < -SWIPE_MARGIN)
+            {
+                d("left swiped");
+            }
+            else if (dx > SWIPE_MARGIN)
+            {
+                d("right swiped");
+            }
+        }
+    }
+
+error_return:
+    return TRUE;
+}
+
 static void activate(GtkApplication *app, gpointer user_data)
 {
     GtkWidget *window;
@@ -120,6 +186,12 @@ static void activate(GtkApplication *app, gpointer user_data)
     // Create a drawing area and set the draw callback
     drawing_area = (GtkDrawingArea *)gtk_drawing_area_new();
     gtk_container_add(GTK_CONTAINER(window), (GtkWidget *)drawing_area);
+    //    gtk_widget_set_events((GtkWidget*)drawing_area, gtk_widget_get_events ((GtkWidget*)drawing_area) | GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK );
+    gtk_widget_set_events((GtkWidget *)drawing_area, gtk_widget_get_events((GtkWidget *)drawing_area) | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
+    //     g_signal_connect(G_OBJECT(drawing_area), "motion-notify-event", G_CALLBACK(motion_notify_event), NULL);
+    g_signal_connect(G_OBJECT(drawing_area), "button-press-event", G_CALLBACK(motion_notify_event), NULL);
+    g_signal_connect(G_OBJECT(drawing_area), "button-release-event", G_CALLBACK(motion_notify_event), NULL);
+
     g_signal_connect((GtkWidget *)drawing_area, "draw", G_CALLBACK(draw_callback), pdf);
 
     gtk_widget_show_all(window);
